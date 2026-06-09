@@ -7,8 +7,8 @@
     {
       "name": "claude-knowledge-plugin",
       "source": {
-        "source": "github",
-        "repo": "arui-git/claude-knowledge-plugin"
+        "source": "url",
+        "url": "https://github.com/arui-git/claude-knowledge-plugin.git"
       },
       "description": "Development knowledge base lifecycle management — auto-scan Git repos, generate project knowledge, architecture docs, ADR records, maintain tech knowledge base with multi-project support",
       "version": "1.0.0",

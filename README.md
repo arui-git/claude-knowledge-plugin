@@ -74,6 +74,39 @@ Claude Code 插件 — 开发知识库全生命周期管理系统。
 | "生成ADR" | adr-manager | 创建架构决策记录 |
 | "架构决策" | adr-manager | ADR 管理 |
 
+## 主动知识搜索（自动）
+
+插件安装后，Claude 会**主动搜索知识库**，无需用户手动触发：
+
+1. **SessionStart Hook** — 每次会话启动时，自动注入 `knowledge/index.md` 到上下文，Claude 始终知道知识库有什么
+2. **knowledge-search Skill** — 当用户问题涉及项目技术栈、架构、依赖、决策历史时，Claude 自动搜索 `knowledge/` 目录获取详情
+
+安装 Hook 配置：
+
+```bash
+# 将 hooks 配置合并到项目的 .claude/settings.json
+# 参考 hooks/session-start-knowledge.json
+```
+
+或在 `.claude/settings.json` 中手动添加：
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start-knowledge.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
 ## 核心能力
 
 | Skill | 触发词 | 说明 |
@@ -81,6 +114,7 @@ Claude Code 插件 — 开发知识库全生命周期管理系统。
 | **claude-knowledge-plugin:knowledge-manager** | 更新知识库、同步文档、维护开发文档 | 知识库全生命周期管理 |
 | **claude-knowledge-plugin:adr-manager** | 生成ADR、架构决策 | 架构决策记录管理 |
 | **claude-knowledge-plugin:repo-analyzer** | 接入项目、分析项目、分析仓库、阅读代码库 | Git 仓库扫描与项目知识生成 |
+| **claude-knowledge-plugin:knowledge-search** | 自动触发（不可手动调用） | Claude 主动搜索知识库 |
 
 ## 用户命令
 
@@ -100,7 +134,8 @@ claude-knowledge-plugin/
 ├── skills/                      # 核心能力模块
 │   ├── knowledge-manager/       # 知识库生命周期管理
 │   ├── adr-manager/             # ADR 管理
-│   └── repo-analyzer/           # 仓库分析器
+│   ├── repo-analyzer/           # 仓库分析器
+│   └── knowledge-search/        # 主动知识搜索（Claude 自动调用）
 ├── commands/                    # 用户入口命令
 │   ├── init-project.md
 │   ├── sync-project.md
@@ -108,9 +143,11 @@ claude-knowledge-plugin/
 ├── templates/                   # 模板文件
 │   ├── CLAUDE.md                # 项目配置模板
 │   └── knowledge-layout/        # 知识库目录结构模板
-├── hooks/                       # Git Hooks（可选）
-│   ├── post-commit.sh
-│   └── post-merge.sh
+├── hooks/                       # Hooks
+│   ├── post-commit.sh           # Git post-commit（可选）
+│   ├── post-merge.sh            # Git post-merge（可选）
+│   ├── session-start-knowledge.sh  # SessionStart 知识库注入
+│   └── session-start-knowledge.json # Hook 配置示例
 ├── installer/                   # 安装器
 │   └── init.md
 └── README.md
