@@ -1,3 +1,5 @@
+#还是半成品
+
 # claude-knowledge-plugin
 
 Claude Code 插件 — 开发知识库全生命周期管理系统。
