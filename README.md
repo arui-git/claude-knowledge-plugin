@@ -6,15 +6,17 @@ Claude Code 插件 — 开发知识库全生命周期管理系统。
 
 ## 快速开始
 
-### 方式一：一键初始化（推荐）
+### 方式一：通过 Marketplace 安装（推荐）
 
-在 Claude Code 中执行：
+```bash
+# 添加插件市场
+/plugin marketplace add arui-git/claude-knowledge-plugin
 
+# 安装插件
+/plugin install claude-knowledge-plugin@knowledge-tools
 ```
-/installer/init
-```
 
-按提示选择知识库路径，插件自动完成所有配置。
+安装完成后，在任意项目中即可使用所有命令和 Skill。
 
 ### 方式二：手动安装
 
@@ -22,50 +24,94 @@ Claude Code 插件 — 开发知识库全生命周期管理系统。
 2. 将 `templates/` 中需要的模板复制到项目根目录
 3. 在项目 `.claude/settings.json` 中注册 hooks（可选）
 
+## 使用流程
+
+### Step 1: 初始化知识库
+
+```
+/claude-knowledge-plugin:init-project
+```
+
+按提示选择知识库路径：
+- 当前项目目录下 `knowledge/`（单项目）
+- 指定独立目录（多项目共享）
+- 克隆已有 Git 仓库（团队共享）
+
+### Step 2: 接入项目
+
+```
+/claude-knowledge-plugin:import-repo /path/to/your/project
+```
+
+自动执行 6 阶段分析：
+1. **项目发现** — 扫描 Git 仓库、配置文件、目录结构
+2. **知识生成** — 按模板输出项目知识文档
+3. **知识关联** — 对比现有知识库，建立交叉引用
+4. **知识沉淀** — 发现新技术/架构，创建对应文档
+5. **ADR 维护** — 识别架构决策，创建 ADR 记录
+6. **索引更新** — 刷新 index.md
+
+### Step 3: 增量同步
+
+项目代码变更后，同步更新知识库：
+
+```
+/claude-knowledge-plugin:sync-project [project-name]
+```
+
+不指定名称则同步所有已接入项目。基于 Git diff 增量更新，只修改变更部分。
+
+### 日常使用
+
+安装后可在对话中直接用自然语言触发 Skill：
+
+| 你说 | 触发的 Skill | 动作 |
+|------|-------------|------|
+| "分析项目 xxx" | repo-analyzer | 完整仓库扫描 |
+| "接入项目 xxx" | repo-analyzer | 导入新仓库 |
+| "更新知识库" | knowledge-manager | 增量同步 |
+| "同步文档" | knowledge-manager | 更新文档 |
+| "生成ADR" | adr-manager | 创建架构决策记录 |
+| "架构决策" | adr-manager | ADR 管理 |
+
 ## 核心能力
 
 | Skill | 触发词 | 说明 |
 |-------|--------|------|
-| **knowledge-manager** | 更新知识库、同步文档、维护开发文档 | 知识库全生命周期管理 |
-| **adr-manager** | 生成ADR、架构决策 | 架构决策记录管理 |
-| **repo-analyzer** | 接入项目、分析项目、分析仓库、阅读代码库 | Git 仓库扫描与项目知识生成 |
+| **claude-knowledge-plugin:knowledge-manager** | 更新知识库、同步文档、维护开发文档 | 知识库全生命周期管理 |
+| **claude-knowledge-plugin:adr-manager** | 生成ADR、架构决策 | 架构决策记录管理 |
+| **claude-knowledge-plugin:repo-analyzer** | 接入项目、分析项目、分析仓库、阅读代码库 | Git 仓库扫描与项目知识生成 |
 
 ## 用户命令
 
 | 命令 | 说明 |
 |------|------|
-| `/init-project` | 初始化知识库，创建目录结构和索引 |
-| `/sync-project` | 增量同步项目知识（基于 Git diff） |
-| `/import-repo` | 接入新仓库，完整分析并生成知识文档 |
+| `/claude-knowledge-plugin:init-project` | 初始化知识库，创建目录结构和索引 |
+| `/claude-knowledge-plugin:sync-project` | 增量同步项目知识（基于 Git diff） |
+| `/claude-knowledge-plugin:import-repo` | 接入新仓库，完整分析并生成知识文档 |
 
 ## 目录结构
 
 ```
 claude-knowledge-plugin/
-├── skills/                     # 核心能力模块
-│   ├── knowledge-manager/      # 知识库生命周期管理
-│   │   └── SKILL.md
-│   ├── adr-manager/            # ADR 管理
-│   │   └── SKILL.md
-│   └── repo-analyzer/          # 仓库分析器
-│       └── SKILL.md
-├── commands/                   # 用户入口流程
+├── .claude-plugin/
+│   ├── plugin.json              # 插件清单
+│   └── marketplace.json         # 市场配置
+├── skills/                      # 核心能力模块
+│   ├── knowledge-manager/       # 知识库生命周期管理
+│   ├── adr-manager/             # ADR 管理
+│   └── repo-analyzer/           # 仓库分析器
+├── commands/                    # 用户入口命令
 │   ├── init-project.md
 │   ├── sync-project.md
 │   └── import-repo.md
-├── templates/                  # 模板文件
-│   ├── CLAUDE.md               # 项目 CLAUDE.md 模板
-│   └── knowledge-layout/       # 知识库目录结构模板
-│       ├── projects/
-│       ├── systems/
-│       ├── architecture/
-│       ├── adr/
-│       ├── runbooks/
-│       └── index.md
-├── hooks/                      # Git Hooks（可选）
+├── templates/                   # 模板文件
+│   ├── CLAUDE.md                # 项目配置模板
+│   └── knowledge-layout/        # 知识库目录结构模板
+├── hooks/                       # Git Hooks（可选）
 │   ├── post-commit.sh
 │   └── post-merge.sh
-├── installer/                  # 安装器
+├── installer/                   # 安装器
 │   └── init.md
 └── README.md
 ```
@@ -84,19 +130,6 @@ knowledge/
 └── index.md         # 总索引
 ```
 
-## 工作流程
-
-```
-/import-repo <path>
-    │
-    ├─ Phase 1: 项目发现（扫描 Git 仓库、配置文件、目录结构）
-    ├─ Phase 2: 知识生成（按模板输出项目文档）
-    ├─ Phase 3: 知识关联（对比现有知识库，建立交叉引用）
-    ├─ Phase 4: 知识沉淀（发现新技术/架构，创建对应文档）
-    ├─ Phase 5: ADR 维护（识别架构决策，创建 ADR 记录）
-    └─ Phase 6: 索引更新（刷新 index.md）
-```
-
 ## 维护原则
 
 - **代码是事实来源** — 知识库内容可追溯到代码
@@ -107,11 +140,14 @@ knowledge/
 
 ## Git Hook 自动同步（可选）
 
-安装后，`post-commit` 和 `post-merge` hook 可自动触发知识库增量同步：
-
 ```bash
 # 安装 hook（在目标仓库根目录执行）
 bash hooks/post-commit.sh install
+bash hooks/post-merge.sh install
+
+# 卸载
+bash hooks/post-commit.sh uninstall
+bash hooks/post-merge.sh uninstall
 ```
 
 ## 许可证
