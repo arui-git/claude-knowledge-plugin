@@ -1,5 +1,5 @@
 ---
-name: repo-analyzer
+name: claude-knowledge-plugin:repo-analyzer
 description: Git 仓库扫描与项目知识生成 — 技术栈识别、模块分析、依赖提取、Git 历史挖掘
 triggers:
   - 接入项目

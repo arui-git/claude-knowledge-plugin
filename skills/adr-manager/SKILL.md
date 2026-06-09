@@ -1,5 +1,5 @@
 ---
-name: adr-manager
+name: claude-knowledge-plugin:adr-manager
 description: 架构决策记录管理 — ADR 创建、编号、生命周期、关联维护
 triggers:
   - 生成ADR

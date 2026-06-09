@@ -1,0 +1,20 @@
+{
+  "name": "knowledge-tools",
+  "owner": {
+    "name": "labixiaorui"
+  },
+  "plugins": [
+    {
+      "name": "claude-knowledge-plugin",
+      "source": {
+        "source": "github",
+        "repo": "arui-git/claude-knowledge-plugin"
+      },
+      "description": "Development knowledge base lifecycle management — auto-scan Git repos, generate project knowledge, architecture docs, ADR records, maintain tech knowledge base with multi-project support",
+      "version": "1.0.0",
+      "author": {
+        "name": "labixiaorui"
+      }
+    }
+  ]
+}

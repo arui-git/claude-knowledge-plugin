@@ -1,5 +1,5 @@
 ---
-name: knowledge-manager
+name: claude-knowledge-plugin:knowledge-manager
 description: 开发知识库全生命周期管理 — 项目知识、技术知识、架构文档、索引维护、交叉引用
 triggers:
   - 更新知识库
