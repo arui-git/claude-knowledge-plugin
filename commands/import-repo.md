@@ -9,7 +9,7 @@ description: 接入新 Git 仓库，完整分析并生成全套知识文档
 
 ## 参数
 
-- `path`（必需）— Git 仓库的本地路径
+- `path`（可选）— Git 仓库的本地路径。不提供时默认为当前项目目录（`.`）。
 
 ## 前置条件
 
@@ -23,6 +23,7 @@ description: 接入新 Git 仓库，完整分析并生成全套知识文档
    ```bash
    git -C <path> rev-parse --is-inside-work-tree
    ```
+   如果未指定 path，使用当前目录（`.`）。
 
 2. **获取基础信息**
    - 项目名称（目录名或 remote URL）

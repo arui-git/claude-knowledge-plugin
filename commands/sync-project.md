@@ -9,17 +9,21 @@ description: 增量同步项目知识，基于 Git diff 分析变更并更新知
 
 ## 参数
 
-- `name`（可选）— 项目名称。不提供时同步所有已接入项目。
+- `name`（可选）— 项目名称。不提供时同步当前项目（根据当前目录自动匹配）。
 
 ## 执行步骤
 
 ### 1. 定位项目知识文档
 
+如果指定了 name：
 ```
 knowledge/projects/<name>.md
 ```
 
-如果未指定 name，扫描 `knowledge/projects/` 下所有 `.md` 文件。
+如果未指定 name，根据当前工作目录自动匹配：
+- 从当前目录向上查找 Git 仓库根目录
+- 用仓库目录名匹配 `knowledge/projects/` 下的文档
+- 未找到匹配时提示用户指定项目名称
 
 ### 2. 读取上次分析状态
 
@@ -96,4 +100,8 @@ git log <last_commit>..HEAD --grep="migrate\|switch\|replace\|refactor\|redesign
 
 ## 批量同步
 
-不指定 name 时，遍历所有已接入项目，逐一执行增量同步。输出汇总报告。
+使用 `--all` 参数同步所有已接入项目：
+
+```
+/claude-knowledge-plugin:sync-project --all
+```

@@ -9,9 +9,25 @@ description: 初始化知识库目录结构、索引和配置
 
 ## 执行步骤
 
-### 1. 询问知识库路径
+### 1. 检测已有知识库
 
-向用户确认知识库存放位置：
+先检测当前项目及上级目录是否已有 `knowledge/` 目录：
+
+```bash
+# 检查当前项目下
+ls knowledge/index.md 2>/dev/null
+
+# 检查上级目录（多项目共享模式）
+ls ../knowledge/index.md 2>/dev/null
+```
+
+如果找到已有知识库，询问用户：
+- **使用已有知识库** — 直接注册到当前项目
+- **重新初始化** — 创建新知识库
+
+### 2. 询问知识库路径
+
+如果未找到已有知识库，向用户确认知识库存放位置：
 
 - **选项 A**: 当前项目根目录下创建 `knowledge/`（单项目模式）
 - **选项 B**: 指定独立目录（多项目共享模式）
@@ -23,7 +39,7 @@ description: 初始化知识库目录结构、索引和配置
 git clone <knowledge-repo-url> <target-path>
 ```
 
-### 2. 创建目录结构
+### 3. 创建目录结构
 
 在目标路径下创建：
 
@@ -41,7 +57,7 @@ knowledge/
 mkdir -p <knowledge-path>/{projects,systems,architecture,adr,runbooks}
 ```
 
-### 3. 生成索引文件
+### 4. 生成索引文件
 
 创建 `knowledge/index.md`：
 
@@ -73,11 +89,11 @@ mkdir -p <knowledge-path>/{projects,systems,architecture,adr,runbooks}
 |------|------|------|------|
 ```
 
-### 4. 复制模板文件
+### 5. 复制模板文件
 
 将插件 `templates/knowledge-layout/` 下的模板复制到知识库目录。
 
-### 5. 初始化 Git（可选）
+### 6. 初始化 Git（可选）
 
 如果知识库目录不是已有的 Git 仓库：
 
@@ -88,13 +104,32 @@ git add .
 git commit -m "init knowledge base"
 ```
 
-### 6. 注册到项目配置
+### 7. 检查并自动安装 Hook
 
-在当前项目的 `.claude/` 目录下记录知识库路径（如通过 CLAUDE.md 或 memory）。
+检查以下 Hook 是否已安装，未安装则自动安装：
 
-向用户确认是否：
-- 安装 Git Hook（post-commit 自动同步）
-- 立即执行首次项目扫描（/import-repo）
+**a) Git Hooks（目标仓库根目录下执行）**
+
+```bash
+# 检查 post-commit hook 是否已安装
+grep -qF "knowledge-sync-post-commit" .git/hooks/post-commit 2>/dev/null || bash ${PLUGIN_ROOT}/hooks/post-commit.sh install
+
+# 检查 post-merge hook 是否已安装
+grep -qF "knowledge-sync-post-merge" .git/hooks/post-merge 2>/dev/null || bash ${PLUGIN_ROOT}/hooks/post-merge.sh install
+```
+
+**b) SessionStart Hook（项目 `.claude/settings.json`）**
+
+检查项目的 `.claude/settings.json` 是否已配置 SessionStart hook。
+未配置则合并 `hooks/session-start-knowledge.json` 的内容。
+
+### 8. 注册到项目配置
+
+在当前项目的 `.claude/` 目录下或 CLAUDE.md 中记录知识库路径。
+
+### 9. 询问首次扫描
+
+向用户确认是否立即执行首次项目扫描（`/import-repo`）。
 
 ## 输出
 

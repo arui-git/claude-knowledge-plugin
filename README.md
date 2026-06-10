@@ -11,6 +11,10 @@ Claude Code 插件 — 开发知识库全生命周期管理系统。
 ### 方式一：通过 Marketplace 安装（推荐）
 
 ```bash
+# Claude code 官方推荐设置环境变量，强制所有插件源的克隆使用 HTTPS
+export CLAUDE_CODE_PLUGIN_PREFER_HTTPS=true
+
+# 在Claude code中执行以下命令
 # 添加插件市场
 /plugin marketplace add arui-git/claude-knowledge-plugin
 
@@ -20,13 +24,19 @@ Claude Code 插件 — 开发知识库全生命周期管理系统。
 
 安装完成后，在任意项目中即可使用所有命令和 Skill。
 
-### 方式二：手动安装
+### 方式二：本地安装
 
-1. 将 `skills/` 目录复制到项目的 `.claude/skills/` 下
-2. 将 `templates/` 中需要的模板复制到项目根目录
-3. 在项目 `.claude/settings.json` 中注册 hooks（可选）
+```bash
+# 1. 将插件仓库克隆到本地
+git clone https://github.com/arui-git/claude-knowledge-plugin.git
+
+# 2. 使用本地路径添加市场
+/plugin marketplace add /path/to/claude-knowledge-plugin
+```
 
 ## 使用流程
+
+接收一个新项目时的完整流程：
 
 ### Step 1: 初始化知识库
 
@@ -34,15 +44,23 @@ Claude Code 插件 — 开发知识库全生命周期管理系统。
 /claude-knowledge-plugin:init-project
 ```
 
-按提示选择知识库路径：
-- 当前项目目录下 `knowledge/`（单项目）
-- 指定独立目录（多项目共享）
-- 克隆已有 Git 仓库（团队共享）
+Agent 会自动：
+- 检测当前项目是否已有知识库（如有则直接使用）
+- 引导选择知识库路径（当前项目 / 独立目录 / 克隆远程仓库）
+- 创建目录结构和索引
+- **自动检查并安装所有 Hook**（SessionStart、post-commit、post-merge），无需手动配置
+- 询问是否立即执行首次项目扫描
 
 ### Step 2: 接入项目
 
 ```
-/claude-knowledge-plugin:import-repo /path/to/your/project
+/claude-knowledge-plugin:import-repo
+```
+
+默认接入**当前项目**，也可指定路径：
+
+```
+/claude-knowledge-plugin:import-repo /path/to/project
 ```
 
 自动执行 6 阶段分析：
@@ -53,17 +71,26 @@ Claude Code 插件 — 开发知识库全生命周期管理系统。
 5. **ADR 维护** — 识别架构决策，创建 ADR 记录
 6. **索引更新** — 刷新 index.md
 
-### Step 3: 增量同步
-
-项目代码变更后，同步更新知识库：
+### Step 3: 手动同步
 
 ```
-/claude-knowledge-plugin:sync-project [project-name]
+/claude-knowledge-plugin:sync-project
 ```
 
-不指定名称则同步所有已接入项目。基于 Git diff 增量更新，只修改变更部分。
+默认同步**当前项目**（自动匹配当前目录）。也可指定项目名称或同步全部：
 
-### 日常使用
+```
+/claude-knowledge-plugin:sync-project <project-name>
+/claude-knowledge-plugin:sync-project --all
+```
+
+基于 Git diff 增量更新，只修改变更部分。
+
+### Step 4: 自动同步（push 后）
+
+当 Agent 执行 `git push` 后，自动触发知识库增量同步，无需手动操作。
+
+## 日常使用
 
 安装后可在对话中直接用自然语言触发 Skill：
 
@@ -83,32 +110,6 @@ Claude Code 插件 — 开发知识库全生命周期管理系统。
 1. **SessionStart Hook** — 每次会话启动时，自动注入 `knowledge/index.md` 到上下文，Claude 始终知道知识库有什么
 2. **knowledge-search Skill** — 当用户问题涉及项目技术栈、架构、依赖、决策历史时，Claude 自动搜索 `knowledge/` 目录获取详情
 
-安装 Hook 配置：
-
-```bash
-# 将 hooks 配置合并到项目的 .claude/settings.json
-# 参考 hooks/session-start-knowledge.json
-```
-
-或在 `.claude/settings.json` 中手动添加：
-
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start-knowledge.sh"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
 ## 核心能力
 
 | Skill | 触发词 | 说明 |
@@ -122,9 +123,9 @@ Claude Code 插件 — 开发知识库全生命周期管理系统。
 
 | 命令 | 说明 |
 |------|------|
-| `/claude-knowledge-plugin:init-project` | 初始化知识库，创建目录结构和索引 |
-| `/claude-knowledge-plugin:sync-project` | 增量同步项目知识（基于 Git diff） |
-| `/claude-knowledge-plugin:import-repo` | 接入新仓库，完整分析并生成知识文档 |
+| `/claude-knowledge-plugin:init-project` | 初始化知识库，自动检测已有知识库，自动安装 Hook |
+| `/claude-knowledge-plugin:import-repo [path]` | 接入项目（默认当前项目），完整分析并生成知识文档 |
+| `/claude-knowledge-plugin:sync-project [name]` | 增量同步项目知识（默认当前项目，`--all` 同步全部） |
 
 ## 目录结构
 
@@ -143,15 +144,13 @@ claude-knowledge-plugin/
 │   ├── sync-project.md
 │   └── import-repo.md
 ├── templates/                   # 模板文件
-│   ├── CLAUDE.md                # 项目配置模板
+│   ├── CLAUDE.md                # 项目配置模板（含自动同步规则）
 │   └── knowledge-layout/        # 知识库目录结构模板
 ├── hooks/                       # Hooks
-│   ├── post-commit.sh           # Git post-commit（可选）
-│   ├── post-merge.sh            # Git post-merge（可选）
-│   ├── session-start-knowledge.sh  # SessionStart 知识库注入
+│   ├── post-commit.sh           # Git post-commit（自动安装）
+│   ├── post-merge.sh            # Git post-merge（自动安装）
+│   ├── session-start-knowledge.sh  # SessionStart 知识库注入（自动安装）
 │   └── session-start-knowledge.json # Hook 配置示例
-├── installer/                   # 安装器
-│   └── init.md
 └── README.md
 ```
 
@@ -176,18 +175,7 @@ knowledge/
 - **ADR 不可删除** — 历史决策永久保留
 - **优先增量更新** — 已有文档只更新变更部分
 - **建立交叉引用** — 文档间通过相对路径链接
-
-## Git Hook 自动同步（可选）
-
-```bash
-# 安装 hook（在目标仓库根目录执行）
-bash hooks/post-commit.sh install
-bash hooks/post-merge.sh install
-
-# 卸载
-bash hooks/post-commit.sh uninstall
-bash hooks/post-merge.sh uninstall
-```
+- **push 自动同步** — Agent push 后自动触发知识库增量更新
 
 ## 许可证
 
