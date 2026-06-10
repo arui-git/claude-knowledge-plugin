@@ -104,24 +104,78 @@ git add .
 git commit -m "init knowledge base"
 ```
 
-### 7. 检查并自动安装 Hook
+### 7. 强制安装 Hook（必须执行，不要跳过）
 
-检查以下 Hook 是否已安装，未安装则自动安装：
+**此步骤必须执行，不询问用户。** 直接执行以下操作：
 
-**a) Git Hooks（目标仓库根目录下执行）**
+**a) Git Hooks**
+
+在目标仓库根目录下执行以下命令（使用 Bash 工具）：
 
 ```bash
-# 检查 post-commit hook 是否已安装
-grep -qF "knowledge-sync-post-commit" .git/hooks/post-commit 2>/dev/null || bash ${PLUGIN_ROOT}/hooks/post-commit.sh install
+# 安装 post-commit hook（知识库同步提醒）
+# 先找到插件安装路径，通常在 ~/.claude/plugins/cache/ 下搜索 claude-knowledge-plugin
+PLUGIN_HOOK_DIR=$(find ~/.claude/plugins/cache -path "*/claude-knowledge-plugin/hooks" -type d 2>/dev/null | head -1)
 
-# 检查 post-merge hook 是否已安装
-grep -qF "knowledge-sync-post-merge" .git/hooks/post-merge 2>/dev/null || bash ${PLUGIN_ROOT}/hooks/post-merge.sh install
+if [ -n "$PLUGIN_HOOK_DIR" ]; then
+    bash "$PLUGIN_HOOK_DIR/post-commit.sh" install
+    bash "$PLUGIN_HOOK_DIR/post-merge.sh" install
+else
+    # 备选：直接写入 hook 内容
+    MARKER="# >>> knowledge-sync-post-commit >>>"
+    if [ -f .git/hooks/post-commit ] && grep -qF "$MARKER" .git/hooks/post-commit 2>/dev/null; then
+        echo "post-commit hook already installed"
+    else
+        cat >> .git/hooks/post-commit <<'HOOK_EOF'
+
+# >>> knowledge-sync-post-commit >>>
+# Auto-sync knowledge base after commit
+echo "[knowledge-plugin] Commit detected. Run '/claude-knowledge-plugin:sync-project' to sync knowledge base."
+# >>> knowledge-sync-post-commit >>>
+HOOK_EOF
+        chmod +x .git/hooks/post-commit
+        echo "post-commit hook installed"
+    fi
+
+    MARKER2="# >>> knowledge-sync-post-merge >>>"
+    if [ -f .git/hooks/post-merge ] && grep -qF "$MARKER2" .git/hooks/post-merge 2>/dev/null; then
+        echo "post-merge hook already installed"
+    else
+        cat >> .git/hooks/post-merge <<'HOOK_EOF'
+
+# >>> knowledge-sync-post-merge >>>
+# Auto-sync knowledge base after merge/pull
+echo "[knowledge-plugin] Merge detected. Run '/claude-knowledge-plugin:sync-project' to sync knowledge base."
+# >>> knowledge-sync-post-merge >>>
+HOOK_EOF
+        chmod +x .git/hooks/post-merge
+        echo "post-merge hook installed"
+    fi
+fi
 ```
 
-**b) SessionStart Hook（项目 `.claude/settings.json`）**
+**b) SessionStart Hook**
 
-检查项目的 `.claude/settings.json` 是否已配置 SessionStart hook。
-未配置则合并 `hooks/session-start-knowledge.json` 的内容。
+直接修改项目的 `.claude/settings.json`，合并以下内容（如文件不存在则创建）：
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [ -f \"${CLAUDE_PROJECT_DIR}/knowledge/index.md\" ]; then cat \"${CLAUDE_PROJECT_DIR}/knowledge/index.md\"; fi'"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+使用 Read 工具读取现有 `.claude/settings.json`，用 Edit 工具合并 hooks 配置。不要覆盖已有配置，只添加缺失的 SessionStart hook。
 
 ### 8. 注册到项目配置
 

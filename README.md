@@ -48,7 +48,7 @@ Agent 会自动：
 - 检测当前项目是否已有知识库（如有则直接使用）
 - 引导选择知识库路径（当前项目 / 独立目录 / 克隆远程仓库）
 - 创建目录结构和索引
-- **自动检查并安装所有 Hook**（SessionStart、post-commit、post-merge），无需手动配置
+- **强制安装所有 Hook**（SessionStart、post-commit、post-merge），无需手动配置
 - 询问是否立即执行首次项目扫描
 
 ### Step 2: 接入项目
